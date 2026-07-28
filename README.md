@@ -14,15 +14,57 @@ modernized in the open — one phase per pull request. See
 | 0 | Repo cleanup & scaffolding | ✅ Done |
 | 1 | Database redesign | ✅ Done |
 | 2 | NestJS + TypeScript backend | ✅ Done |
-| 3 | Vite migration | ✅ In this PR |
-| 4 | Vue 3 Composition API frontend rewrite | ⬜ Not started |
+| 3 | Vite migration | ✅ Done |
+| 4 | Vue 3 Composition API frontend rewrite | ✅ In this PR |
 | 5 | Docker & tests | ⬜ Not started |
 | 6 | Tooling & CI | ⬜ Not started |
 | 7 | Documentation | ⬜ Not started |
 
-**Both halves now run.** The frontend is still the original Options API code
-talking to the old endpoints — Phase 4 rewrites it. Nothing here is deployed
-anywhere, and all seed data is fictional.
+**The app works end to end** — register, log in, apply, review as an admin.
+Docker Compose and tests land in Phase 5. Nothing here is deployed anywhere,
+and all seed data is fictional.
+
+### What Phase 4 did
+
+Rewrote every component with `<script setup>` and TypeScript.
+
+- **Pinia** replaces Vuex and the deprecated `vuex-persistedstate`. `logout()`
+  now also clears the axios `Authorization` header — the old one didn't, so the
+  token stayed attached for the rest of the session.
+- **One `api/client.ts`** replaces `AuthService.js` and the ad-hoc axios calls
+  scattered through components, with a 401 interceptor and real error
+  normalization. Every old `catch` did `error.response.data.msg`, which itself
+  throws on a network error.
+- **One layout** replaces three near-identical navbars and two footers — one of
+  which read *"Copyrighted by Charusat."*, left over from an unrelated tutorial.
+- **`<html>`/`<body>` tags removed** from the six templates that had them.
+  Titles moved to route meta.
+- **`AppPage.vue` (252 lines) → `ApplyView`** over three field components, with
+  client-side validation and a disabled-while-submitting state. GPA and hours
+  were `type="text"` with no validation at all.
+- **`Admin.vue` (209 lines) → `AdminView` + `DataTable`.** Four near-identical
+  axios methods collapse into one call; `loadcurrMajorApplications` was never
+  called, so that table always rendered empty.
+- **Route guards actually fire.** The old guard tested
+  `store.state.user === null`, but the default state was `{}` — so every
+  protected route was reachable while logged out.
+- **Accessibility:** every input has an `id` with a matching `<label for>` (all
+  ~15 were `for=""`), `aria-sort` on sortable headers, `alt=""` on decorative
+  icons, unique `v-for` keys, and logout is a real button.
+
+Verified in a headless browser against the live API:
+
+```
+/apply while logged out        -> redirects to /login?redirect=/apply  ✅
+empty login submit             -> field-level errors                   ✅
+login as admin                 -> admin dashboard, 12 applications     ✅
+sort by GPA                    -> order flips, aria-sort updates       ✅
+accept an application          -> Rejected -> Accepted                 ✅
+logout                         -> localStorage cleared, /dashboard 403 ✅
+login as student               -> no admin UI visible                  ✅
+labels with empty for=""       -> 0                                    ✅
+console errors                 -> none                                 ✅
+```
 
 ### What Phase 3 did
 

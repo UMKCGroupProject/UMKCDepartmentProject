@@ -215,6 +215,19 @@ db/                  schema and seed SQL, run on first boot
 docs/screenshots/
 ```
 
+## Notes
+
+- **All data is fictional.** The seed uses invented names, courses and
+  instructors on the reserved `example.edu` domain.
+- The demo credentials above are for the local seed only. `JWT_SECRET` is
+  validated at boot to be at least 32 characters, and the compose file's value
+  is a placeholder to be replaced anywhere real.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the checks CI runs, and the
+conventions this project follows.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

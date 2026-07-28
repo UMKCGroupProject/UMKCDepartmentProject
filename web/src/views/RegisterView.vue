@@ -33,7 +33,8 @@ function validate(): boolean {
 
   if (!f.firstName.trim()) next.firstName = 'First name is required';
   if (!f.lastName.trim()) next.lastName = 'Last name is required';
-  if (!/^\d{8}$/.test(f.umkcId)) next.umkcId = 'UMKC ID must be exactly 8 digits';
+  if (!/^\d{8}$/.test(f.umkcId))
+    next.umkcId = 'UMKC ID must be exactly 8 digits';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email))
     next.email = 'Enter a valid email address';
   if (f.password.length < 8)

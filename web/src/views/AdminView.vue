@@ -34,7 +34,8 @@ async function loadApplications(): Promise<void> {
   try {
     const { data } = await client.get<Paginated<Application>>('/applications', {
       params: {
-        courseId: selectedCourseId.value === '' ? undefined : selectedCourseId.value,
+        courseId:
+          selectedCourseId.value === '' ? undefined : selectedCourseId.value,
         sortBy: sortBy.value,
         order: order.value,
         limit: 100,
@@ -129,7 +130,11 @@ const columns: Column<Application>[] = [
             class="form-select"
           >
             <option value="">All courses</option>
-            <option v-for="course in courses" :key="course.id" :value="course.id">
+            <option
+              v-for="course in courses"
+              :key="course.id"
+              :value="course.id"
+            >
               {{ course.courseNo }} {{ course.section }} —
               {{ course.courseName }}
             </option>

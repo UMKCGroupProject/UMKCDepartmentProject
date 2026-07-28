@@ -45,7 +45,13 @@ import world from '@/assets/world.png';
               <!-- alt="" on the decorative icons; the text beside each one
                    already carries the meaning. -->
               <div class="d-flex align-items-center mb-3">
-                <img :src="droppin" alt="" width="32" height="32" class="me-3" />
+                <img
+                  :src="droppin"
+                  alt=""
+                  width="32"
+                  height="32"
+                  class="me-3"
+                />
                 <p class="mb-0">
                   <span>Address:</span> 5110 Rockhill Rd, Kansas City, MO 64110
                 </p>

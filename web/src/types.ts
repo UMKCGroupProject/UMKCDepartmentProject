@@ -29,11 +29,7 @@ export interface Course {
 }
 
 export type CurrentLevel =
-  | 'freshman'
-  | 'sophomore'
-  | 'junior'
-  | 'senior'
-  | 'graduate';
+  'freshman' | 'sophomore' | 'junior' | 'senior' | 'graduate';
 
 export type Position = 'grader' | 'lab instructor' | 'both';
 
@@ -66,10 +62,6 @@ export interface Paginated<T> {
 }
 
 export type ApplicationSortBy =
-  | 'gpa'
-  | 'hrsCompleted'
-  | 'lastName'
-  | 'firstName'
-  | 'appliedAt';
+  'gpa' | 'hrsCompleted' | 'lastName' | 'firstName' | 'appliedAt';
 
 export type SortOrder = 'ASC' | 'DESC';

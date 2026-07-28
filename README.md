@@ -148,19 +148,27 @@ with a 400 and never reaches the database.
 Run the database in Docker and both apps on the host for hot reload.
 
 ```bash
-# Database
+# Database — run this from the repository root
 docker run -d --name gta-db -p 3306:3306 \
   -e MYSQL_ROOT_PASSWORD=rootpw -e MYSQL_DATABASE=gta_portal \
   -e MYSQL_USER=gta -e MYSQL_PASSWORD=gtapw \
   -v "$PWD/db:/docker-entrypoint-initdb.d:ro" mysql:8
+```
 
-# API — http://localhost:3000
-cd api && cp .env.example .env   # set JWT_SECRET to 32+ characters
-npm install && npm run start:dev
+```bash
+# API — http://localhost:3000, docs at /api/docs
+cd api
+cp .env.example .env    # then set JWT_SECRET to 32+ characters
+npm install
+npm run start:dev
+```
 
-# Web — http://localhost:5173
-cd web && cp .env.example .env
-npm install && npm run dev
+```bash
+# Web — http://localhost:5173, in a second terminal
+cd web
+cp .env.example .env
+npm install
+npm run dev
 ```
 
 The Vite dev server proxies `/api` to port 3000, so no CORS setup is needed.

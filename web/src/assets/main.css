@@ -12,6 +12,7 @@
   --color-danger: #f08a8a;
   --color-success: #7fc99a;
   --color-text-on-dark: #f8f9fa;
+  --color-hint-on-dark: #b9c0c8;
   --color-table-head: #d6ecf7;
 
   --radius-card: 1rem;
@@ -29,6 +30,15 @@ body {
   background-color: var(--color-surface);
   border-radius: var(--radius-card);
   color: var(--color-text-on-dark);
+}
+
+/*
+ * Bootstrap's .form-text is a muted grey chosen for light backgrounds, which
+ * leaves field hints almost unreadable on the dark cards. Lighten it enough to
+ * clear the WCAG AA contrast threshold while still reading as secondary text.
+ */
+.app-card .form-text {
+  color: var(--color-hint-on-dark);
 }
 
 .app-section {

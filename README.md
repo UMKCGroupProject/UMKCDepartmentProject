@@ -148,19 +148,27 @@ with a 400 and never reaches the database.
 Run the database in Docker and both apps on the host for hot reload.
 
 ```bash
-# Database
+# Database — run this from the repository root
 docker run -d --name gta-db -p 3306:3306 \
   -e MYSQL_ROOT_PASSWORD=rootpw -e MYSQL_DATABASE=gta_portal \
   -e MYSQL_USER=gta -e MYSQL_PASSWORD=gtapw \
   -v "$PWD/db:/docker-entrypoint-initdb.d:ro" mysql:8
+```
 
-# API — http://localhost:3000
-cd api && cp .env.example .env   # set JWT_SECRET to 32+ characters
-npm install && npm run start:dev
+```bash
+# API — http://localhost:3000, docs at /api/docs
+cd api
+cp .env.example .env    # then set JWT_SECRET to 32+ characters
+npm install
+npm run start:dev
+```
 
-# Web — http://localhost:5173
-cd web && cp .env.example .env
-npm install && npm run dev
+```bash
+# Web — http://localhost:5173, in a second terminal
+cd web
+cp .env.example .env
+npm install
+npm run dev
 ```
 
 The Vite dev server proxies `/api` to port 3000, so no CORS setup is needed.
@@ -206,6 +214,19 @@ web/                 Vue 3 + Vite frontend
 db/                  schema and seed SQL, run on first boot
 docs/screenshots/
 ```
+
+## Notes
+
+- **All data is fictional.** The seed uses invented names, courses and
+  instructors on the reserved `example.edu` domain.
+- The demo credentials above are for the local seed only. `JWT_SECRET` is
+  validated at boot to be at least 32 characters, and the compose file's value
+  is a placeholder to be replaced anywhere real.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the checks CI runs, and the
+conventions this project follows.
 
 ## License
 

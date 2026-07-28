@@ -40,7 +40,10 @@ const hintId = `${fieldId}-hint`;
     <slot
       :id="fieldId"
       :invalid="Boolean(error)"
-      :described-by="[hint ? hintId : '', error ? errorId : ''].filter(Boolean).join(' ') || undefined"
+      :described-by="
+        [hint ? hintId : '', error ? errorId : ''].filter(Boolean).join(' ') ||
+        undefined
+      "
     />
 
     <div v-if="hint" :id="hintId" class="form-text">{{ hint }}</div>

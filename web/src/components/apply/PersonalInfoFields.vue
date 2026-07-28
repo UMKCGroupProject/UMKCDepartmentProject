@@ -40,8 +40,7 @@ const semesters = ['Spring', 'Summer', 'Fall'].flatMap((term) =>
     <legend class="h5">Your details</legend>
 
     <p class="mb-3">
-      Applying as <strong>{{ fullName }}</strong> ({{ umkcId }},
-      {{ email }}).
+      Applying as <strong>{{ fullName }}</strong> ({{ umkcId }}, {{ email }}).
     </p>
 
     <FormField

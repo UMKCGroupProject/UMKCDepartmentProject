@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to the same branch cancels the run already in flight.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Lint, typecheck and unit-test both workspaces in parallel.
+  check:
+    name: check (${{ matrix.workspace }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: [api, web]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+
+      - name: Install
+        working-directory: ${{ matrix.workspace }}
+        run: npm ci
+
+      - name: Lint
+        working-directory: ${{ matrix.workspace }}
+        run: npm run lint
+
+      - name: Typecheck
+        working-directory: ${{ matrix.workspace }}
+        run: npm run typecheck
+
+      - name: Unit tests
+        working-directory: ${{ matrix.workspace }}
+        run: npm test
+
+  # The API e2e suite needs a real database, so it gets its own job with a
+  # MySQL service container seeded from db/.
+  api-e2e:
+    name: api e2e
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: rootpw
+          MYSQL_DATABASE: gta_portal
+          MYSQL_USER: gta
+          MYSQL_PASSWORD: gtapw
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -prootpw"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      # Service containers can't mount /docker-entrypoint-initdb.d, so the
+      # schema and seed are piped in here instead.
+      - name: Load schema and seed data
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uroot -prootpw < db/01-schema.sql
+          mysql -h 127.0.0.1 -P 3306 -uroot -prootpw < db/02-seed.sql
+
+      - name: Install
+        working-directory: api
+        run: npm ci
+
+      - name: Run e2e tests
+        working-directory: api
+        run: npm run test:e2e
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          CORS_ORIGIN: http://localhost:5173
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USERNAME: gta
+          DB_PASSWORD: gtapw
+          DB_NAME: gta_portal
+          JWT_SECRET: ci-only-secret-that-is-long-enough-to-pass-validation
+          JWT_EXPIRES_IN: 1d
+
+  # Proves the images still build and the stack actually comes up.
+  docker:
+    name: docker build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images
+        run: docker compose build
+
+      - name: Start the stack
+        run: docker compose up -d --wait
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          # The frontend is served, and its history-mode fallback works.
+          curl -fsS -o /dev/null http://localhost:8080/
+          curl -fsS -o /dev/null http://localhost:8080/dashboard
+          # A seeded account can log in through the nginx -> api proxy.
+          curl -fsS -X POST http://localhost:8080/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"admin@example.edu","password":"Password123!"}' \
+            | grep -q accessToken
+          echo "Smoke test passed"
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

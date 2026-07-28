@@ -14,8 +14,7 @@ describe('LoginView', () => {
     await router.isReady();
   });
 
-  const mountView = () =>
-    mount(LoginView, { global: { plugins: [router] } });
+  const mountView = () => mount(LoginView, { global: { plugins: [router] } });
 
   it('shows field errors instead of calling the API on an empty submit', async () => {
     const auth = useAuthStore();

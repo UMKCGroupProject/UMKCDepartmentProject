@@ -16,10 +16,14 @@ services:
       - ./db:/docker-entrypoint-initdb.d:ro
       - db-data:/var/lib/mysql
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-prootpw']
+      # Over TCP on 127.0.0.1, not the local socket. While the init scripts run,
+      # MySQL starts a temporary socket-only server — pinging that would report
+      # healthy before the schema and seed data exist.
+      test:
+        ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-P', '3306', '-uroot', '-prootpw']
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 30
       start_period: 30s
 
   api:
@@ -40,13 +44,33 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      # /api/docs needs no auth, so it is a cheap way to confirm Nest is
+      # actually listening rather than merely having been started.
+      test:
+        ['CMD', 'wget', '--quiet', '--spider', 'http://127.0.0.1:3000/api/docs']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   web:
     build: ./web
     ports:
       - '8080:80'
     depends_on:
-      - api
+      # Healthy, not merely started — otherwise nginx can accept a request and
+      # return 502 because the API behind it is not up yet.
+      api:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1 rather than localhost: nginx listens on IPv4 only here, and
+      # localhost resolves to ::1 first inside the container.
+      test: ['CMD', 'wget', '--quiet', '--spider', 'http://127.0.0.1:80/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
 volumes:
   db-data:

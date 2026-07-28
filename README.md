@@ -73,7 +73,7 @@ erDiagram
     varchar last_name
   }
   students {
-    int user_id PK_FK
+    int user_id PK, FK
     varchar contact_no
     bool certified
   }
@@ -96,8 +96,8 @@ erDiagram
     datetime applied_at
   }
   student_courses {
-    int user_id PK_FK
-    int course_id PK_FK
+    int user_id PK, FK
+    int course_id PK, FK
     char grade
   }
 ```

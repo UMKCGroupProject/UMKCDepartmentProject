@@ -11,8 +11,8 @@ modernized in the open — one phase per pull request. See
 
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
-| 0 | Repo cleanup & scaffolding | ✅ In this PR |
-| 1 | Database redesign | ⬜ Not started |
+| 0 | Repo cleanup & scaffolding | ✅ Done |
+| 1 | Database redesign | ✅ In this PR |
 | 2 | NestJS + TypeScript backend | ⬜ Not started |
 | 3 | Vite migration | ⬜ Not started |
 | 4 | Vue 3 Composition API frontend rewrite | ⬜ Not started |
@@ -24,6 +24,37 @@ modernized in the open — one phase per pull request. See
 entry point, and the Express API interpolates request input directly into SQL on
 most routes. Both are fixed in later phases. Nothing here is deployed anywhere,
 and the seed data is fictional.
+
+### What Phase 1 did
+
+Rewrote the database as `db/01-schema.sql` + `db/02-seed.sql`.
+
+The old dump had no foreign keys, no indexes beyond primary keys, and a join
+that could never succeed: `Accounts.umkcID` was a `VARCHAR(65)` holding a bcrypt
+hash while `Students.umkcID` was an `INT`. It also shipped real-looking
+university emails, student IDs, GPAs and instructor names in a public repo.
+
+- Split login identity (`users`) from student profile (`students`) on a real
+  surrogate key, with foreign keys and `ON DELETE CASCADE` throughout.
+- `password_hash` is its own column. `role` is an `ENUM` defaulting to
+  `'student'`, so privilege can only ever be granted server-side.
+- `applications` gained `UNIQUE(user_id, course_id)`, `INDEX(course_id, gpa)`
+  for the admin dashboard's main query, and a `status` enum for review.
+- Applicant name and email are no longer duplicated onto every application.
+- **All real data replaced** with invented people and courses on the reserved
+  `example.edu` domain: 1 admin, 8 students, 6 courses, 12 applications.
+- Dropped the debug `SELECT *` after every `CREATE` and the two hardcoded
+  course-`12719` analytics queries.
+
+Verified by mounting `db/` into a `mysql:8` container — both scripts run clean
+and every foreign key resolves. Demo accounts (password `Password123!` for all):
+
+| Role | Email |
+| ---- | ----- |
+| Admin | `admin@example.edu` |
+| Student | `avery@example.edu` |
+
+Nothing reads this schema yet; the NestJS API in Phase 2 is the first consumer.
 
 ### What Phase 0 did
 
@@ -51,6 +82,7 @@ Housekeeping only — no behavior changed.
 ## Repository layout
 
 ```
+db/          MySQL schema and demo seed data
 api/         Express API — replaced by NestJS in Phase 2
 gta-portal/  Vue 2-era vue-cli frontend — becomes web/ in Phase 3
 ```

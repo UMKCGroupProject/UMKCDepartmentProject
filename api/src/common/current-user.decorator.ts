@@ -2,8 +2,13 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { AuthenticatedUser } from '../auth/jwt.strategy';
 
 /**
- * Reads the authenticated user off the request. Handlers use this instead of
- * trusting a user id in the request body.
+ * Injects the signed-in user into a handler argument:
+ *
+ *   create(@CurrentUser() user: AuthenticatedUser) { ... }
+ *
+ * The value comes from the verified JWT via JwtStrategy.validate(). Handlers
+ * use this rather than reading a user id out of the request body, which a
+ * client could set to anyone's id.
  */
 export const CurrentUser = createParamDecorator(
   (_data: unknown, context: ExecutionContext): AuthenticatedUser => {

@@ -3,8 +3,9 @@ import FormField from '@/components/FormField.vue';
 
 defineProps<{ errors: Record<string, string> }>();
 
-// GPA and hours were type="text" with no validation at all. They are now
-// numeric inputs with bounds that mirror the server's CreateApplicationDto.
+// Held as strings because that is what an <input> produces; ApplyView converts
+// them with Number() just before submitting. The min/max on the inputs below
+// mirror the bounds the server enforces in CreateApplicationDto.
 const gpa = defineModel<string>('gpa', { required: true });
 const hrsCompleted = defineModel<string>('hrsCompleted', { required: true });
 const degree = defineModel<string>('degree', { required: true });

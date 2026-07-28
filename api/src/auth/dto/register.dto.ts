@@ -42,8 +42,10 @@ export class RegisterDto {
   @MaxLength(20)
   contactNo?: string;
 
-  // Note: there is deliberately no `role` here. The global ValidationPipe runs
-  // with `whitelist: true`, so a client sending `role: 'admin'` has it stripped
-  // before this DTO is constructed. The old API took `isAdmin` from the body,
-  // and the old Register.vue set it client-side from the length of the ID.
+  // There is deliberately no `role` field here.
+  //
+  // The global ValidationPipe runs with `whitelist: true`, which strips any
+  // property the DTO does not declare. So a client that POSTs
+  // { ..., "role": "admin" } has that key removed before AuthService ever
+  // sees it. Leaving `role` out of this class is what makes that safe.
 }

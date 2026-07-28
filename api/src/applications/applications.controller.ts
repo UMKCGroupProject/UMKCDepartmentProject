@@ -59,7 +59,7 @@ export class ApplicationsController {
   @ApiOperation({
     summary: 'List and sort all applications (admin only)',
     description:
-      'Replaces five near-identical legacy routes. `sortBy` is an enum mapped to a column in code, never interpolated into SQL.',
+      '`sortBy` is an enum mapped to a column in code, never interpolated into SQL.',
   })
   @ApiResponse({ status: 403, description: 'Not an admin' })
   findAll(

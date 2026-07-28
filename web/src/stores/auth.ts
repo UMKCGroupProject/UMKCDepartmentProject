@@ -26,8 +26,9 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(persisted?.token ?? null);
   const user = ref<User | null>(persisted?.user ?? null);
 
-  // Reattach on reload, otherwise a refresh drops the header and every
-  // request 401s until the next login.
+  // Re-attach the saved token to axios as soon as the store is created.
+  // Without this, refreshing the page would leave the user apparently logged in
+  // while every request went out unauthenticated.
   setAuthToken(token.value);
 
   const isAuthenticated = computed(() => token.value !== null);
@@ -75,9 +76,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Clears the axios Authorization header as well as the local state. The old
-   * Vuex logout only reset the store, so the bearer token stayed attached to
-   * every subsequent request for the rest of the session.
+   * Ends the session. All three of these matter: the in-memory state, the
+   * persisted copy in localStorage, and the axios Authorization header. Leaving
+   * any one of them set would keep the user partly logged in.
    */
   function logout(): void {
     token.value = null;

@@ -61,19 +61,22 @@ export class CreateApplicationDto {
   @IsEnum(Position)
   position!: Position;
 
-  /** Collected by the old form and then dropped from the request payload. */
+  /** Semester the applicant completed GTA certification, if they have. */
   @ApiProperty({ example: 'Fall 2024', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(15)
   certificationTerm?: string;
 
-  /** Also collected and dropped by the old form. */
+  /** A previous US degree waives the GTA certification requirement. */
   @ApiProperty({ example: false, required: false })
   @IsOptional()
   @IsBoolean()
   prevDegree?: boolean;
 
-  // No `userId`: it comes from the JWT. No `status`: applications always start
-  // as 'pending' and only an admin can change that.
+  // Deliberately absent:
+  //   userId — taken from the signed-in user's token, so nobody can apply on
+  //            someone else's behalf.
+  //   status — every application starts as 'pending'; only an admin can change
+  //            it, through PATCH /applications/:id/status.
 }

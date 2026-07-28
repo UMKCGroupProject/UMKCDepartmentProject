@@ -26,8 +26,11 @@ export class User {
   email!: string;
 
   /**
-   * `select: false` so a plain `find()` can never leak the hash. The old
-   * login route did `SELECT *` and returned `result[0]` straight to the client.
+   * The bcrypt hash of the user's password. Never the password itself.
+   *
+   * `select: false` means TypeORM leaves this column out of ordinary queries.
+   * Code that genuinely needs it (only the login check) has to ask for it
+   * explicitly, so it cannot be leaked into an API response by accident.
    */
   @Column({ name: 'password_hash', type: 'char', length: 60, select: false })
   passwordHash!: string;

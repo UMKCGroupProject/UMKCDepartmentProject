@@ -76,7 +76,9 @@ async function handleSubmit(): Promise<void> {
 
   submitting.value = true;
   try {
-    // No userId in the payload — the API reads it from the JWT.
+    // The numeric fields are strings while they live in the inputs, so they
+    // are converted here. There is no userId in the payload: the API takes the
+    // applicant from the auth token.
     await client.post<Application>('/applications', {
       courseId: Number(form.value.courseId),
       gpa: Number(form.value.gpa),

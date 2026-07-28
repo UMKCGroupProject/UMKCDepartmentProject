@@ -24,10 +24,9 @@ const errors = ref<FieldErrors>({});
 const formError = ref('');
 const submitting = ref(false);
 
-// Mirrors the server-side RegisterDto so the user gets feedback without a
-// round trip. The server validates regardless — this is convenience, not
-// security. Notably absent: anything that decides whether the user is an
-// admin. The old Register.vue set `isAdmin = 1` when the ID was 9 digits.
+// Mirrors the rules in the server's RegisterDto so the user gets immediate
+// feedback instead of a round trip. The server re-checks all of it — this is
+// a convenience, never the enforcement point.
 function validate(): boolean {
   const f = form.value;
   const next: FieldErrors = {};

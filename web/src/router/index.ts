@@ -2,8 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
-// All paths lowercase. The old router defined '/AppPage' but HomePage.vue
-// pushed '/Register' against a route registered as '/register'.
+// Every route is declared here. `component` uses a dynamic import so each view
+// becomes its own bundle, loaded the first time the route is visited.
+//
+// meta flags drive the guard below:
+//   requiresAuth  — must be signed in
+//   requiresAdmin — must be signed in as an admin
+//   guestOnly     — signed-in users are sent to their dashboard instead
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -58,9 +63,9 @@ router.beforeEach((to) => {
   // The store must be resolved inside the guard, after Pinia is installed.
   const auth = useAuthStore();
 
-  // The old guard tested `store.state.user === null`, but the default state
-  // was `{}` — so it never fired and every protected route was reachable
-  // while logged out.
+  // Note this is a convenience, not a security boundary: the guard only
+  // decides what to render. The API independently rejects any request without
+  // a valid token, which is what actually protects the data.
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } };
   }
@@ -73,8 +78,8 @@ router.beforeEach((to) => {
   return true;
 });
 
-// Page titles live in route meta rather than in <title> tags illegally
-// embedded in component templates.
+// A single-page app never reloads, so the document title has to be updated by
+// hand on each navigation.
 router.afterEach((to) => {
   const title = to.meta.title;
   document.title = typeof title === 'string' ? title : 'GTA Portal';

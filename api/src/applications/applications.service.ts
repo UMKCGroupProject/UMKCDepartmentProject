@@ -21,9 +21,11 @@ export interface PaginatedApplications {
 }
 
 /**
- * Maps the public sort enum to a qualified column. Kept as a plain object so
- * it can be unit tested without a database, and so no caller can ever reach
- * the ORDER BY clause with a string of its own.
+ * Translates the public sort names into real, fully-qualified column names.
+ *
+ * This lookup table is the only bridge between a client-supplied value and an
+ * ORDER BY clause. Because the result can only ever be one of these five
+ * hardcoded strings, a caller cannot inject SQL through the sort parameter.
  */
 const SORT_COLUMNS: Record<ApplicationSortBy, string> = {
   [ApplicationSortBy.GPA]: 'application.gpa',
@@ -36,8 +38,9 @@ const SORT_COLUMNS: Record<ApplicationSortBy, string> = {
 export function resolveSortColumn(sortBy: ApplicationSortBy): string {
   const column = SORT_COLUMNS[sortBy];
   if (!column) {
-    // Unreachable through the API — the ValidationPipe rejects unknown values
-    // first — but this keeps the guarantee local to the function.
+    // Not reachable through the API, since the ValidationPipe rejects unknown
+    // values first. Kept so the safety guarantee holds even if this function is
+    // called from somewhere else later.
     throw new Error(`Unsupported sort field: ${String(sortBy)}`);
   }
   return column;
@@ -72,7 +75,7 @@ export class ApplicationsService {
 
     const application = this.applications.create({
       ...dto,
-      userId, // from the JWT, never from the request body
+      userId, // from the verified token, never from the request body
       certificationTerm: dto.certificationTerm ?? null,
       prevDegree: dto.prevDegree ?? false,
       status: ApplicationStatus.PENDING,
@@ -81,7 +84,10 @@ export class ApplicationsService {
     return this.applications.save(application);
   }
 
-  /** The signed-in student's own applications. */
+  /**
+   * The signed-in student's own applications, newest first. Scoped by userId,
+   * so this endpoint can never return someone else's data.
+   */
   findMine(userId: number): Promise<Application[]> {
     return this.applications.find({
       where: { userId },
@@ -91,9 +97,8 @@ export class ApplicationsService {
   }
 
   /**
-   * Admin listing. Replaces five byte-identical routes that differed only in
-   * their ORDER BY — one of which (`/applicationsGPA`) actually sorted by
-   * `currMajor DESC`.
+   * Admin listing: every application, optionally filtered to one course, sorted
+   * by any whitelisted field, and paginated.
    */
   async findAll(query: QueryApplicationsDto): Promise<PaginatedApplications> {
     const qb = this.applications
@@ -102,7 +107,8 @@ export class ApplicationsService {
       .innerJoinAndSelect('application.course', 'course');
 
     if (query.courseId !== undefined) {
-      // Parameterized, not interpolated.
+      // `:courseId` is a bound parameter — the driver sends the value
+      // separately from the SQL text, so it can never be read as SQL.
       qb.andWhere('application.courseId = :courseId', {
         courseId: query.courseId,
       });

@@ -12,7 +12,7 @@ async function bootstrap(): Promise<void> {
 
   app.use(helmet());
 
-  // The old server used a bare cors(), which allows every origin.
+  // Only the configured frontend origin may call this API from a browser.
   app.enableCors({
     origin: config.getOrThrow<string>('CORS_ORIGIN'),
     credentials: true,
@@ -20,9 +20,12 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      // Strips properties with no decorator on the DTO. This is what makes a
-      // client-supplied `role: 'admin'` disappear before it reaches a handler.
+      // Drops any request property the DTO does not declare. This is what stops
+      // a client from smuggling extra fields such as `role` or `userId` into a
+      // handler — see the note at the bottom of RegisterDto.
       whitelist: true,
+      // Turns the plain JSON body into an instance of the DTO class, so the
+      // @Type(() => Number) conversions in the DTOs actually run.
       transform: true,
       transformOptions: { enableImplicitConversion: false },
     }),

@@ -10,9 +10,11 @@ import { AuthenticatedUser } from '../auth/jwt.strategy';
 import { ROLES_KEY } from './roles.decorator';
 
 /**
- * Runs after JwtAuthGuard, so `request.user` is already populated. Privilege
- * is decided here on the server; the old app decided it in the browser from
- * the length of the submitted ID string.
+ * Enforces `@Roles(...)` on a controller or handler.
+ *
+ * Runs after JwtAuthGuard, so `request.user` is already filled in from the
+ * verified token. A route with no @Roles decorator is left alone — this guard
+ * only restricts what has explicitly been marked as restricted.
  */
 @Injectable()
 export class RolesGuard implements CanActivate {

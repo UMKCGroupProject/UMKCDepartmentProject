@@ -1,0 +1,52 @@
+# One command to a working app:  docker compose up
+#
+# Credentials here are local-only demo values. The API still refuses to boot
+# without a JWT_SECRET of at least 32 characters.
+
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: gta_portal
+      MYSQL_USER: gta
+      MYSQL_PASSWORD: gtapw
+    # Runs 01-schema.sql then 02-seed.sql on a fresh volume, in filename order.
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d:ro
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-prootpw']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  api:
+    build: ./api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:8080
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: gta
+      DB_PASSWORD: gtapw
+      DB_NAME: gta_portal
+      JWT_SECRET: local-development-secret-change-me-in-production
+      JWT_EXPIRES_IN: 1d
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+
+volumes:
+  db-data:

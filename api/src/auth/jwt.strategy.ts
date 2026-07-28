@@ -34,8 +34,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
-    // Re-read the role from the database rather than trusting the token, so a
-    // demotion takes effect immediately instead of at token expiry.
+    // Passport has already verified the token's signature and expiry before
+    // calling this. We still re-read the user from the database so that a role
+    // change or a deleted account takes effect immediately, rather than when
+    // the token happens to expire.
     const user = await this.users.findOne({ where: { id: payload.sub } });
     if (!user) {
       throw new UnauthorizedException('Account no longer exists');

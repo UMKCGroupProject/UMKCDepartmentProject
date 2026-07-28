@@ -17,9 +17,14 @@ export interface ErrorResponseBody {
 }
 
 /**
- * Gives every error one shape. The old API returned `{ msg }` on some routes,
- * `res.json(500, ...)` (an Express 3 signature that no longer works) on others,
- * and rethrew raw driver errors on a few — which leaked SQL to the client.
+ * Catches everything thrown anywhere in the app and turns it into one
+ * consistent JSON error shape, so the frontend only ever has to parse one
+ * format.
+ *
+ * Errors we raised deliberately (NotFoundException, ForbiddenException, ...)
+ * keep their status and message. Anything unexpected is logged in full on the
+ * server but reported to the client as a generic 500 — an unexpected error's
+ * details can include database internals, which must not leave the server.
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

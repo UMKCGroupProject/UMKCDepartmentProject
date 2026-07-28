@@ -10,7 +10,8 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests"
+    "test": "jest",
+    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand"
   },
   "comment:overrides": "Transitive advisories in build/test tooling that upstream has not shipped a release for yet. Both resolve to a patched version with no API change.",
   "overrides": {

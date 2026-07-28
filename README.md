@@ -12,18 +12,58 @@ modernized in the open — one phase per pull request. See
 | Phase | Scope | Status |
 | ----- | ----- | ------ |
 | 0 | Repo cleanup & scaffolding | ✅ Done |
-| 1 | Database redesign | ✅ In this PR |
-| 2 | NestJS + TypeScript backend | ⬜ Not started |
+| 1 | Database redesign | ✅ Done |
+| 2 | NestJS + TypeScript backend | ✅ In this PR |
 | 3 | Vite migration | ⬜ Not started |
 | 4 | Vue 3 Composition API frontend rewrite | ⬜ Not started |
 | 5 | Docker & tests | ⬜ Not started |
 | 6 | Tooling & CI | ⬜ Not started |
 | 7 | Documentation | ⬜ Not started |
 
-**Right now the app does not run.** The frontend is missing its `public/index.html`
-entry point, and the Express API interpolates request input directly into SQL on
-most routes. Both are fixed in later phases. Nothing here is deployed anywhere,
-and the seed data is fictional.
+**The API runs; the frontend does not yet.** The Vue app is still missing its
+`index.html` entry point, fixed in Phase 3. Nothing here is deployed anywhere,
+and all seed data is fictional.
+
+### What Phase 2 did
+
+Replaced the Express API with NestJS + TypeScript in `api/`, and closed the
+security holes that made the original interesting to come back to.
+
+**The seven SQL injection points are gone.** Every query now goes through a
+TypeORM repository with bound parameters. The original built SQL by string
+interpolation, including the login route:
+
+```js
+// before — auth-bypassable
+`SELECT * FROM Accounts WHERE email = '${req.body.email}'`
+```
+
+Other fixes worth calling out:
+
+| Then | Now |
+| ---- | --- |
+| The student ID *was* the password (bcrypt'd into the `umkcID` column) | Real `password_hash`, `MinLength(8)` enforced |
+| `isAdmin` read from the request body; the browser set it via `if (umkcID.length === 9)` | Role is always `student` server-side; a `role` field in the body is stripped by `whitelist: true` |
+| JWTs signed with the literal string `'TOKEN'` | `JWT_SECRET` from env, Joi-validated at boot to be ≥32 chars |
+| Login returned `SELECT *`, leaking the hash | `UserResponseDto` built field by field |
+| Register fired two sequential inserts, no rollback | One transaction |
+| Wide-open `cors()`, no security headers | CORS scoped to `CORS_ORIGIN`, plus `helmet` |
+| Five byte-identical sort routes (one of which sorted by the wrong column) | One `GET /applications?courseId=&sortBy=&order=`, `sortBy` an enum mapped to a column in code |
+| GPA and hours were unvalidated free text | `class-validator`: GPA 0–4.0, hours an integer |
+| `certificationTerm` / `prevDegree` collected then dropped | Persisted |
+| No way to accept or reject | `PATCH /applications/:id/status`, admin only |
+
+Live API docs are served at **`/api/docs`** (Swagger).
+
+Verified against a `mysql:8` container seeded from `db/`:
+
+```
+registering with "role":"admin"   -> account created as student  ✅
+login response contains a hash    -> no                          ✅
+student GET /applications         -> 403                         ✅
+?sortBy=gpa; DROP TABLE users--   -> 400, users table intact      ✅
+GPA 5.5                           -> 400                         ✅
+```
 
 ### What Phase 1 did
 
@@ -83,18 +123,38 @@ Housekeeping only — no behavior changed.
 
 ```
 db/          MySQL schema and demo seed data
-api/         Express API — replaced by NestJS in Phase 2
+api/         NestJS + TypeScript API
 gta-portal/  Vue 2-era vue-cli frontend — becomes web/ in Phase 3
 ```
 
 ## Local development
 
-Current (pre-modernization) instructions, kept until the phases that replace them:
+### API
+
+Needs a MySQL 8 instance seeded from `db/`. Docker Compose arrives in Phase 5;
+until then:
 
 ```bash
-cd gta-portal
+docker run -d --name gta-db -p 3306:3306 \
+  -e MYSQL_ROOT_PASSWORD=rootpw -e MYSQL_DATABASE=gta_portal \
+  -e MYSQL_USER=gta -e MYSQL_PASSWORD=gtapw \
+  -v "$PWD/db:/docker-entrypoint-initdb.d:ro" mysql:8
+
+cd api
+cp .env.example .env      # then set JWT_SECRET to 32+ characters
 npm install
-npm run serve    # see the note above — this does not currently mount
+npm run start:dev
+```
+
+Then open <http://localhost:3000/api/docs>, log in via `POST /auth/login` with a
+demo account below, and paste the returned token into **Authorize**.
+
+### Frontend
+
+Still the original vue-cli app, and still does not mount — Phase 3 fixes it.
+
+```bash
+cd gta-portal && npm install && npm run serve
 ```
 
 ## License

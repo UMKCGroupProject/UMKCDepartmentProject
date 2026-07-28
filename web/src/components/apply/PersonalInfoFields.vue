@@ -3,9 +3,12 @@ import FormField from '@/components/FormField.vue';
 import type { CurrentLevel } from '@/types';
 
 /**
- * Identity is read from the signed-in account rather than typed in. The old
- * form asked for name, UMKC ID and email again and sent whatever was entered,
- * so an applicant could submit under someone else's ID.
+ * Step one of the application form: who is applying, and where they are in
+ * their degree.
+ *
+ * Name, UMKC ID and email are shown read-only, taken from the signed-in
+ * account. They are not editable inputs because the server reads the applicant
+ * from the auth token anyway — asking again would only invite mismatches.
  */
 defineProps<{
   fullName: string;

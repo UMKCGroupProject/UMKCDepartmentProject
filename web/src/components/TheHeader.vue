@@ -27,8 +27,8 @@ function handleLogout(): void {
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <!-- One id, used once. The old headers put id="navbarSupportedContent"
-           on both the collapse target and the logout button. -->
+      <!-- This id is referenced by the toggler's data-bs-target above, which
+           is how Bootstrap knows what to collapse. It must be unique. -->
       <div id="primary-nav" class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
@@ -51,8 +51,8 @@ function handleLogout(): void {
               <span class="navbar-text me-3">{{ auth.fullName }}</span>
             </li>
             <li class="nav-item">
-              <!-- A plain button. The old markup nested a <router-link> inside
-                   a <button>, so logging out navigated before it ran. -->
+              <!-- A plain button, not a link: logging out is an action, and it
+                   decides where to navigate afterwards itself. -->
               <button
                 type="button"
                 class="btn btn-outline-light btn-sm"

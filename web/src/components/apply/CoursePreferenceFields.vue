@@ -9,8 +9,8 @@ defineProps<{
 
 const courseId = defineModel<number | ''>('courseId', { required: true });
 const position = defineModel<Position | ''>('position', { required: true });
-// Persisted now. The old form collected both and then dropped them from the
-// request payload.
+// Optional: only relevant to applicants who are already GTA certified, or who
+// hold a previous US degree (which waives certification).
 const certificationTerm = defineModel<string>('certificationTerm', {
   required: true,
 });
@@ -27,8 +27,8 @@ const positions: { value: Position; label: string }[] = [
   <fieldset class="mb-4">
     <legend class="h5">Course preference</legend>
 
-    <!-- A real select over the course list. The old form asked the applicant
-         to type a course code into a free-text box. -->
+    <!-- Populated from GET /courses, so the value submitted is always a real
+         course id rather than a hand-typed code. -->
     <FormField
       v-slot="{ id, invalid, describedBy }"
       label="Course"

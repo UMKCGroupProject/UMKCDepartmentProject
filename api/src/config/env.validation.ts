@@ -1,10 +1,12 @@
 import * as Joi from 'joi';
 
 /**
- * Validated at boot, so a missing or weak secret fails fast instead of
- * silently falling back to a default. The old Express server hardcoded
- * `user: "root", password: ""` in source and signed JWTs with the literal
- * string 'TOKEN'.
+ * Every environment variable the app needs, described in one place.
+ *
+ * @nestjs/config runs this schema at startup. If something is missing or
+ * malformed the app refuses to boot with a clear message, rather than starting
+ * up and failing later on the first request. Nothing here has a secret as its
+ * default — a real value must be supplied.
  */
 export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()

@@ -22,9 +22,11 @@ const loading = ref(true);
 const error = ref('');
 
 /**
- * One call replaces the four near-identical axios methods in the old
- * Admin.vue (loadApplicationsGPA/Hrs/FName/LName), which hit four separate
- * endpoints that differed only in their ORDER BY.
+ * Fetches the applications for the current filter and sort settings.
+ *
+ * One function covers every combination: changing the course filter, clicking
+ * a different column, or flipping the direction all just update the refs below
+ * and call this again.
  */
 async function loadApplications(): Promise<void> {
   loading.value = true;
@@ -148,8 +150,8 @@ const columns: Column<Application>[] = [
           @sort="handleSort"
         />
 
-        <!-- Review actions. The old admin view could only look; there was no
-             way to accept or reject anyone. -->
+        <!-- Accept/reject actions. Updating the row object in place is enough
+             for the table above to re-render, since it is the same object. -->
         <div v-if="applications.length" class="app-card p-4">
           <h2 class="h5 mb-3">Review</h2>
           <ul class="list-unstyled mb-0">

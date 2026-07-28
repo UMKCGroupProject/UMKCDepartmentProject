@@ -62,8 +62,8 @@ function ariaSort(key: string): 'ascending' | 'descending' | 'none' {
             {{ emptyMessage ?? 'Nothing to show yet.' }}
           </td>
         </tr>
-        <!-- Keyed by row id. Admin.vue keyed by courseID, which collides for
-             every applicant to the same course. -->
+        <!-- Keyed by row id, which is unique per row. Using a value that can
+             repeat (a course id, say) would make Vue reuse the wrong DOM. -->
         <tr v-for="row in rows" v-else :key="row.id">
           <td v-for="column in columns" :key="column.key">
             {{ column.value(row) }}

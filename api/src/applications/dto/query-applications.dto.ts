@@ -3,11 +3,12 @@ import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 /**
- * Whitelist of sortable fields. The value is an enum, never a column name, and
- * the mapping to a real column happens in ApplicationsService. Anything not in
- * this list is rejected by the ValidationPipe with a 400 before reaching the
- * database — which is what makes `?sortBy=gpa;DROP TABLE users--` a 400 rather
- * than the injection it was against the old string-interpolated queries.
+ * The fields a client is allowed to sort by.
+ *
+ * These are API-level names, not database column names — the translation to a
+ * real column happens in ApplicationsService. Because this is an enum, the
+ * ValidationPipe rejects anything else with a 400 before the request reaches
+ * the service, so no caller-supplied text can ever reach an ORDER BY clause.
  */
 export enum ApplicationSortBy {
   GPA = 'gpa',

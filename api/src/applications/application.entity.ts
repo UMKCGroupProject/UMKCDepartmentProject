@@ -49,9 +49,10 @@ export class Application {
   courseId!: number;
 
   /**
-   * MySQL returns DECIMAL as a string to preserve precision; the transformer
-   * hands the rest of the app a number so `gpa.toFixed()` and JSON output
-   * behave.
+   * MySQL hands DECIMAL columns back as strings, so that large values don't
+   * lose precision in JavaScript. A GPA is small enough that a number is safe,
+   * and much easier to work with — the transformer below does that conversion
+   * on the way out of the database.
    */
   @ApiProperty({ example: 3.75 })
   @Column({
@@ -90,7 +91,7 @@ export class Application {
   @Column({ type: 'enum', enum: Position })
   position!: Position;
 
-  /** Collected by the old application form, then silently dropped on submit. */
+  /** The semester the applicant completed GTA certification, if they have. */
   @ApiProperty({ example: 'Fall 2024', nullable: true })
   @Column({
     name: 'certification_term',
@@ -100,7 +101,7 @@ export class Application {
   })
   certificationTerm!: string | null;
 
-  /** Also collected and dropped by the old form. */
+  /** A previous US degree waives the GTA certification requirement. */
   @ApiProperty()
   @Column({ name: 'prev_degree', type: 'boolean', default: false })
   prevDegree!: boolean;

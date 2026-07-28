@@ -1,9 +1,11 @@
 import axios, { AxiosError } from 'axios';
 
 /**
- * The one axios instance the app uses. Replaces AuthService.js plus the ad-hoc
- * axios calls that were scattered through components, each with its own copy of
- * the base URL.
+ * The single axios instance every request in the app goes through.
+ *
+ * Having one instance means the base URL, the auth header and the 401 handling
+ * are configured in exactly one place, instead of being repeated in each
+ * component that happens to call the API.
  */
 export const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
@@ -11,9 +13,12 @@ export const client = axios.create({
 });
 
 /**
- * Turns anything thrown by axios into a readable string. Every old catch block
- * did `error.response.data.msg`, which itself throws on a network error or a
- * non-JSON response — so a failed request surfaced as a blank screen.
+ * Turns anything a failed request throws into a string worth showing a user.
+ *
+ * Handles the three cases separately: the API replied with a message (possibly
+ * an array of validation errors), the request never reached the server at all,
+ * or something non-axios was thrown. Reading `error.response.data.message`
+ * directly would itself throw in the second case.
  */
 export function toErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
@@ -27,8 +32,9 @@ export function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong';
 }
 
-// Registered by the auth store at startup, so the 401 handler can log out
-// without this module importing the store (which would be a cycle).
+// App.vue registers a callback here at startup. Doing it this way round means
+// this file doesn't have to import the auth store, and the store doesn't have
+// to import this file's interceptor — which would be a circular import.
 let onUnauthorized: (() => void) | null = null;
 
 export function setUnauthorizedHandler(handler: () => void): void {

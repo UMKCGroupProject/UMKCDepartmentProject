@@ -2,9 +2,17 @@
 import { useId } from 'vue';
 
 /**
- * Wires a label to its control and renders the field's error. Every input in
- * the old app had `for=""` on its label — around fifteen of them — so none
- * were announced by a screen reader or clickable to focus.
+ * Wraps one form control with its label, hint and error message.
+ *
+ * The component generates a unique id and hands it to the control through a
+ * slot prop, so the `<label for>` and the input's `id` always match. That is
+ * what lets a screen reader announce the field, and what makes clicking the
+ * label focus the input.
+ *
+ * Usage:
+ *   <FormField label="Email" :error="errors.email" v-slot="{ id, invalid }">
+ *     <input :id="id" v-model="email" :class="{ 'is-invalid': invalid }" />
+ *   </FormField>
  */
 withDefaults(
   defineProps<{

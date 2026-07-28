@@ -39,9 +39,9 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
-    // One transaction for both inserts. The old client fired POST /register and
-    // POST /register/student sequentially with no rollback, so a failure on the
-    // second left an account with no student profile.
+    // Both rows are written inside one transaction. If the students insert
+    // fails, the users insert is rolled back too — otherwise we would be left
+    // with a login account that has no matching student profile.
     const user = await this.dataSource.transaction(async (manager) => {
       const created = manager.create(User, {
         email: dto.email,
@@ -49,7 +49,8 @@ export class AuthService {
         passwordHash,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        // Always a student. Never taken from the request body.
+        // Hardcoded here on purpose: self-registration can only ever create a
+        // student. Admin accounts are provisioned directly in the database.
         role: UserRole.STUDENT,
       });
       const saved = await manager.save(created);
@@ -69,7 +70,8 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
-    // passwordHash is `select: false` on the entity, so ask for it explicitly.
+    // passwordHash is `select: false` on the entity, so it has to be listed
+    // explicitly here — this is the one place the app needs it.
     const user = await this.users.findOne({
       where: { email: dto.email },
       select: {
@@ -83,8 +85,10 @@ export class AuthService {
       },
     });
 
-    // Same message and roughly the same work either way, so the response does
-    // not reveal whether an email is registered.
+    // Deliberately uniform: the same message and roughly the same amount of
+    // work whether the email is unknown or the password is wrong. Otherwise an
+    // attacker could tell which emails have accounts by timing the response or
+    // reading the error text.
     const hash = user?.passwordHash ?? '';
     const matches = hash ? await bcrypt.compare(dto.password, hash) : false;
     if (!user || !matches) {

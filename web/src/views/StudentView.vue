@@ -8,8 +8,8 @@ import type { Application } from '@/types';
 
 const auth = useAuthStore();
 
-// ref([]), not ref({}). The old code initialised `applications: {}` and then
-// read `.length` off it.
+// An empty array, not an empty object — the template iterates over this and
+// reads .length, both of which need a real array before the fetch resolves.
 const applications = ref<Application[]>([]);
 const loading = ref(true);
 const error = ref('');
@@ -28,8 +28,9 @@ const columns: Column<Application>[] = [
   },
 ];
 
-// A real await/try/catch. The old methods wrapped an un-awaited promise in
-// try/catch, so the catch block could never fire.
+// Load the user's applications once the component is on screen. `loading`
+// drives the table's placeholder row, and `finally` makes sure it is cleared
+// whether the request succeeded or failed.
 onMounted(async () => {
   try {
     const { data } = await client.get<Application[]>('/applications/mine');

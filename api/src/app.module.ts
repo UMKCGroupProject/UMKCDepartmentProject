@@ -24,7 +24,8 @@ import { CoursesModule } from './courses/courses.module';
         database: config.getOrThrow<string>('DB_NAME'),
         autoLoadEntities: true,
         // The schema is owned by db/01-schema.sql, which MySQL runs on first
-        // boot. Never let the ORM alter it.
+        // boot. synchronize:true would let TypeORM alter tables to match the
+        // entities, which is unpredictable and can drop data — always off.
         synchronize: false,
         logging: config.get('NODE_ENV') === 'development' ? ['error'] : false,
       }),

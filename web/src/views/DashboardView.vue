@@ -4,22 +4,19 @@ import StudentView from '@/views/StudentView.vue';
 import { useAuthStore } from '@/stores/auth';
 
 /**
- * Picks the dashboard for the signed-in role.
- *
- * Replaces Landing.vue, which read `this.user.isAdmin` in its template (`this.`
- * is invalid in a Vue 3 template) and only populated `user` in mounted(), so
- * the first render always saw `{}` and both dashboards were briefly hidden.
- * The store getter resolves synchronously, so there is no such gap.
+ * /dashboard is one route that renders a different view per role, so neither
+ * side has to know the other's URL.
  */
 const auth = useAuthStore();
 </script>
 
 <template>
   <!--
-    Guard on isAuthenticated as well as the role. logout() clears the token
-    synchronously, but the router navigates away on the next tick — without
-    this, logging out of the admin view flips isAdmin to false first, mounting
-    StudentView just long enough to fire an unauthenticated /applications/mine.
+    The isAuthenticated check matters as much as the role check. logout()
+    clears the token immediately, but the router only navigates away on the
+    next tick. Without this outer guard, logging out of the admin view would
+    flip isAdmin to false first, mounting StudentView for a moment — long
+    enough for it to fire a request with no token attached.
   -->
   <template v-if="auth.isAuthenticated">
     <AdminView v-if="auth.isAdmin" />

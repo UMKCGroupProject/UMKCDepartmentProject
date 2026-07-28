@@ -1,5 +1,7 @@
 # GTA Portal
 
+[![CI](https://github.com/UMKCGroupProject/UMKCDepartmentProject/actions/workflows/ci.yml/badge.svg)](https://github.com/UMKCGroupProject/UMKCDepartmentProject/actions/workflows/ci.yml)
+
 A full-stack web app for managing Graduate Teaching Assistant hiring. Students
 apply for grader and lab-instructor positions; department admins review, sort
 and decide on applicants course by course.
@@ -166,7 +168,7 @@ The Vite dev server proxies `/api` to port 3000, so no CORS setup is needed.
 ## Testing
 
 ```bash
-cd api && npm test          # unit tests
+cd api && npm test           # unit tests
 cd api && npm run test:e2e   # API tests against a live database
 cd web && npm test           # component, store and router tests
 ```
@@ -174,6 +176,11 @@ cd web && npm test           # component, store and router tests
 The API suite covers authentication, role enforcement, input validation and the
 sort-field whitelist. The web suite covers the auth store, router guards, and
 the form components.
+
+Both workspaces also expose `npm run lint`, `npm run typecheck` and
+`npm run format`. CI runs all of these on every pull request, plus the API e2e
+suite against a MySQL service container and a Docker build that smoke-tests the
+running stack.
 
 ## Project structure
 

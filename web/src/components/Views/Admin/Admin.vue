@@ -114,8 +114,8 @@
 <script>
 import Footer from "@/components/Views/Home/Footer.vue";
 import axios from 'axios';
-import AdminHeader from "@/components/Views/Admin/AdminHeader";
-const url = 'http://localhost:3000/api/';
+import AdminHeader from "@/components/Views/Admin/AdminHeader.vue";
+import { API_URL as url } from '@/services/AuthService.js';
 
 export default {
   components: {
@@ -147,7 +147,7 @@ export default {
   },
   methods: {
     loadClasses: function(){
-      axios.get(url + "courses").then((res) => {
+      axios.get(url + "/courses").then((res) => {
         this.classes = res.data.data;
       })
           .catch(()=>{
@@ -156,35 +156,35 @@ export default {
     },
     loadApplicationsGPA: function() {
       try {
-        axios.get(url + 'applicationsGPA', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
+        axios.get(url + '/applicationsGPA', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
       } catch (error) {
         this.msg = error.response.data.msg;
       }
     },
     loadApplicationsHrs: function() {
       try {
-        axios.get(url + 'applicationsHrs', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
+        axios.get(url + '/applicationsHrs', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
       } catch (error) {
         this.msg = error.response.data.msg;
       }
     },
     loadApplicationsFName: function() {
       try {
-        axios.get(url + 'applicationsFName', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
+        axios.get(url + '/applicationsFName', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
       } catch (error) {
         this.msg = error.response.data.msg;
       }
     },
     loadApplicationsLName: function() {
       try {
-        axios.get(url + 'applicationsLName', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
+        axios.get(url + '/applicationsLName', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.applications = response.data.data});
       } catch (error) {
         this.msg = error.response.data.msg;
       }
     },
     loadcurrMajorApplications: function() {
       try {
-        axios.get(url + 'applications/currMajor', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.majorApplications = response.data.data});
+        axios.get(url + '/applications/currMajor', {params: {"courseNo": this.courseName.courseID }} ).then((response) => {this.majorApplications = response.data.data});
       } catch (error) {
         this.msg = error.response.data.msg;
       }

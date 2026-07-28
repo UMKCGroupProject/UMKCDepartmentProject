@@ -4,8 +4,8 @@
 </template>
 
 <script>
-import StudentPage from "@/components/Views/Student/StudentPage";
-import AdminPage from "@/components/Views/Admin/Admin";
+import StudentPage from "@/components/Views/Student/StudentPage.vue";
+import AdminPage from "@/components/Views/Admin/Admin.vue";
 export default {
   name: "LandingPage",
   components: {AdminPage, StudentPage},

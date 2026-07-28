@@ -75,7 +75,7 @@
 import Header from "@/components/Views/Student/StudentHeader.vue";
 import Footer from './Footer.vue'
 import axios from 'axios';
-const url = 'http://localhost:3000/api/';
+import { API_URL as url } from '@/services/AuthService.js';
 
 
 export default {
@@ -108,7 +108,7 @@ export default {
   methods:{
      loadApplications: function() {
       try {
-        axios.get(url + 'applications/umkcId', {params: {"email": this.user.email }} ).then((response) => {
+        axios.get(url + '/applications/umkcId', {params: {"email": this.user.email }} ).then((response) => {
           this.applications = response.data.data;
           for(var i = 0; i<this.applications.length; i++){
           console.log(this.applications[i]);

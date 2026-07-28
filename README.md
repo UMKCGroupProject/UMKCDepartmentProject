@@ -13,16 +13,40 @@ modernized in the open — one phase per pull request. See
 | ----- | ----- | ------ |
 | 0 | Repo cleanup & scaffolding | ✅ Done |
 | 1 | Database redesign | ✅ Done |
-| 2 | NestJS + TypeScript backend | ✅ In this PR |
-| 3 | Vite migration | ⬜ Not started |
+| 2 | NestJS + TypeScript backend | ✅ Done |
+| 3 | Vite migration | ✅ In this PR |
 | 4 | Vue 3 Composition API frontend rewrite | ⬜ Not started |
 | 5 | Docker & tests | ⬜ Not started |
 | 6 | Tooling & CI | ⬜ Not started |
 | 7 | Documentation | ⬜ Not started |
 
-**The API runs; the frontend does not yet.** The Vue app is still missing its
-`index.html` entry point, fixed in Phase 3. Nothing here is deployed anywhere,
-and all seed data is fictional.
+**Both halves now run.** The frontend is still the original Options API code
+talking to the old endpoints — Phase 4 rewrites it. Nothing here is deployed
+anywhere, and all seed data is fictional.
+
+### What Phase 3 did
+
+Moved the frontend from vue-cli to Vite and renamed `gta-portal/` to `web/`.
+Deliberately mechanical: no component internals changed, so the diff stays
+reviewable. The rewrite is Phase 4.
+
+**The headline fix: there was no `index.html`.** The project had no
+`public/index.html` at all, so there was no `#app` element to mount into —
+almost certainly why the app appeared broken. The home page now renders.
+
+- `@vue/cli-service` → `vite` + `@vitejs/plugin-vue`.
+- Deleted `babel.config.js`, `core-js`, and `vue.config.js` — the last of
+  which assigned `module.exports` **twice**, so the second assignment silently
+  clobbered `transpileDependencies`.
+- Dropped dead dependencies: `vuesax` (an alpha that was never imported),
+  `vue-cookies`, and `express` / `mysql` / `body-parser` — server packages
+  listed as *frontend* dependencies.
+- Bootstrap bumped to 5.3.x; three redundant JS imports collapsed into one.
+  `Home/Header.vue` and `Admin/AdminHeader.vue` still used Bootstrap 4's
+  `data-toggle` / `data-target`, so their mobile navbar togglers did nothing.
+- `VITE_API_URL` replaces the hardcoded `http://localhost:3000/api/` that was
+  duplicated across three files.
+- `npm audit`: 0 vulnerabilities.
 
 ### What Phase 2 did
 
@@ -122,9 +146,9 @@ Housekeeping only — no behavior changed.
 ## Repository layout
 
 ```
-db/          MySQL schema and demo seed data
-api/         NestJS + TypeScript API
-gta-portal/  Vue 2-era vue-cli frontend — becomes web/ in Phase 3
+db/   MySQL schema and demo seed data
+api/  NestJS + TypeScript API
+web/  Vue 3 + Vite frontend
 ```
 
 ## Local development
@@ -151,11 +175,15 @@ demo account below, and paste the returned token into **Authorize**.
 
 ### Frontend
 
-Still the original vue-cli app, and still does not mount — Phase 3 fixes it.
-
 ```bash
-cd gta-portal && npm install && npm run serve
+cd web
+cp .env.example .env
+npm install
+npm run dev          # http://localhost:5173
 ```
+
+`/api` is proxied to the API on port 3000 by the Vite dev server, so no CORS
+setup is needed locally.
 
 ## License
 

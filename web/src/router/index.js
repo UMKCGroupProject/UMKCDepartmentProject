@@ -1,13 +1,13 @@
 import { createWebHistory, createRouter } from 'vue-router'
-import Register from '@/components/Views/Register/Register'
-import InfoPage from "@/components/Views/Info/InfoPage"
-import HomePage from "@/components/Views/Home/HomePage"
-import AppPage from "@/components/Views/Application/AppPage"
-import LoginPage from "@/components/Views/Login/LoginPage"
-// import StudentPage from "@/components/Views/Student/StudentPage"
-// import Admin from "@/components/Views/Admin/Admin"
-import Landing from "@/components/Views/Landing/Landing";
-import store from "/src/store/store"
+import Register from '@/components/Views/Register/Register.vue'
+import InfoPage from "@/components/Views/Info/InfoPage.vue"
+import HomePage from "@/components/Views/Home/HomePage.vue"
+import AppPage from "@/components/Views/Application/AppPage.vue"
+import LoginPage from "@/components/Views/Login/LoginPage.vue"
+// import StudentPage from "@/components/Views/Student/StudentPage.vue"
+// import Admin from "@/components/Views/Admin/Admin.vue"
+import Landing from "@/components/Views/Landing/Landing.vue";
+import store from "@/store/store.js"
 const routes = [
     {
         path: "/",

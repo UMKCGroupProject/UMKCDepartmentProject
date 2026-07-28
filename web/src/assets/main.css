@@ -1,0 +1,93 @@
+/*
+ * Design tokens. The old code scattered ~40 inline styles and raw hex values
+ * (#272a34, #1c1e25, skyblue, lightblue, burlywood) across the components.
+ */
+
+:root {
+  --color-surface: #272a34;
+  --color-surface-alt: #1c1e25;
+  --color-page: #6c757d;
+  --color-accent: #63b3ed;
+  --color-accent-muted: #a8d5f2;
+  --color-danger: #f08a8a;
+  --color-success: #7fc99a;
+  --color-text-on-dark: #f8f9fa;
+  --color-table-head: #d6ecf7;
+
+  --radius-card: 1rem;
+  --space-section: 3rem;
+  --footer-height: 3rem;
+}
+
+body {
+  background-color: var(--color-page);
+  /* Keeps content clear of the fixed footer. */
+  padding-bottom: calc(var(--footer-height) + 1rem);
+}
+
+.app-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-card);
+  color: var(--color-text-on-dark);
+}
+
+.app-section {
+  padding-block: var(--space-section);
+}
+
+.app-heading {
+  color: var(--color-text-on-dark);
+}
+
+.app-link {
+  color: var(--color-accent);
+}
+
+.app-error {
+  color: var(--color-danger);
+}
+
+.app-success {
+  color: var(--color-success);
+}
+
+.app-table thead th {
+  background-color: var(--color-table-head);
+}
+
+/* Sortable table headers are real buttons, so give them a flat look rather
+   than the browser default chrome. */
+.app-sort-button {
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.app-sort-button:hover,
+.app-sort-button:focus-visible {
+  text-decoration: underline;
+}
+
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--footer-height);
+}
+
+.app-status {
+  text-transform: capitalize;
+}
+
+.app-status--accepted {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.app-status--rejected {
+  color: var(--color-danger);
+  font-weight: 600;
+}

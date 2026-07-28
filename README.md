@@ -1,232 +1,205 @@
 # GTA Portal
 
-A web app where students apply for Graduate Teaching Assistant positions and
-department admins review applicants course by course.
+A full-stack web app for managing Graduate Teaching Assistant hiring. Students
+apply for grader and lab-instructor positions; department admins review, sort
+and decide on applicants course by course.
 
-Originally a five-person undergraduate team project built in 2022, now being
-modernized in the open — one phase per pull request. See
-[Modernization status](#modernization-status) for where it currently stands.
+Vue 3 + Vite on the front, NestJS + TypeScript on the back, MySQL 8 underneath,
+the whole thing running from a single `docker compose up`.
 
-## Modernization status
+## Screenshots
 
-| Phase | Scope | Status |
-| ----- | ----- | ------ |
-| 0 | Repo cleanup & scaffolding | ✅ Done |
-| 1 | Database redesign | ✅ Done |
-| 2 | NestJS + TypeScript backend | ✅ Done |
-| 3 | Vite migration | ✅ Done |
-| 4 | Vue 3 Composition API frontend rewrite | ✅ In this PR |
-| 5 | Docker & tests | ⬜ Not started |
-| 6 | Tooling & CI | ⬜ Not started |
-| 7 | Documentation | ⬜ Not started |
+| Home | Application form |
+| --- | --- |
+| ![Home](docs/screenshots/home.png) | ![Apply](docs/screenshots/apply-form.png) |
 
-**The app works end to end** — register, log in, apply, review as an admin.
-Docker Compose and tests land in Phase 5. Nothing here is deployed anywhere,
-and all seed data is fictional.
+| Student dashboard | Admin review |
+| --- | --- |
+| ![Student](docs/screenshots/student-dashboard.png) | ![Admin](docs/screenshots/admin-dashboard.png) |
 
-### What Phase 4 did
+## Features
 
-Rewrote every component with `<script setup>` and TypeScript.
+**For students**
+- Register and sign in with a real password, hashed with bcrypt
+- Submit an application for a specific course section, with client- and
+  server-side validation on GPA, completed hours and every other field
+- Track the status of every application submitted — pending, accepted, rejected
 
-- **Pinia** replaces Vuex and the deprecated `vuex-persistedstate`. `logout()`
-  now also clears the axios `Authorization` header — the old one didn't, so the
-  token stayed attached for the rest of the session.
-- **One `api/client.ts`** replaces `AuthService.js` and the ad-hoc axios calls
-  scattered through components, with a 401 interceptor and real error
-  normalization. Every old `catch` did `error.response.data.msg`, which itself
-  throws on a network error.
-- **One layout** replaces three near-identical navbars and two footers — one of
-  which read *"Copyrighted by Charusat."*, left over from an unrelated tutorial.
-- **`<html>`/`<body>` tags removed** from the six templates that had them.
-  Titles moved to route meta.
-- **`AppPage.vue` (252 lines) → `ApplyView`** over three field components, with
-  client-side validation and a disabled-while-submitting state. GPA and hours
-  were `type="text"` with no validation at all.
-- **`Admin.vue` (209 lines) → `AdminView` + `DataTable`.** Four near-identical
-  axios methods collapse into one call; `loadcurrMajorApplications` was never
-  called, so that table always rendered empty.
-- **Route guards actually fire.** The old guard tested
-  `store.state.user === null`, but the default state was `{}` — so every
-  protected route was reachable while logged out.
-- **Accessibility:** every input has an `id` with a matching `<label for>` (all
-  ~15 were `for=""`), `aria-sort` on sortable headers, `alt=""` on decorative
-  icons, unique `v-for` keys, and logout is a real button.
+**For admins**
+- Review all applications in one table, filtered by course
+- Sort by GPA, completed hours, or applicant name, ascending or descending
+- Accept or reject an application inline
 
-Verified in a headless browser against the live API:
+**Throughout**
+- JWT authentication with role-based access control enforced server-side
+- Live, interactive API documentation at `/api/docs`
+- Keyboard-navigable forms: every input is labelled, errors are announced, and
+  sortable table headers expose `aria-sort`
 
-```
-/apply while logged out        -> redirects to /login?redirect=/apply  ✅
-empty login submit             -> field-level errors                   ✅
-login as admin                 -> admin dashboard, 12 applications     ✅
-sort by GPA                    -> order flips, aria-sort updates       ✅
-accept an application          -> Rejected -> Accepted                 ✅
-logout                         -> localStorage cleared, /dashboard 403 ✅
-login as student               -> no admin UI visible                  ✅
-labels with empty for=""       -> 0                                    ✅
-console errors                 -> none                                 ✅
-```
+## Tech stack
 
-### What Phase 3 did
-
-Moved the frontend from vue-cli to Vite and renamed `gta-portal/` to `web/`.
-Deliberately mechanical: no component internals changed, so the diff stays
-reviewable. The rewrite is Phase 4.
-
-**The headline fix: there was no `index.html`.** The project had no
-`public/index.html` at all, so there was no `#app` element to mount into —
-almost certainly why the app appeared broken. The home page now renders.
-
-- `@vue/cli-service` → `vite` + `@vitejs/plugin-vue`.
-- Deleted `babel.config.js`, `core-js`, and `vue.config.js` — the last of
-  which assigned `module.exports` **twice**, so the second assignment silently
-  clobbered `transpileDependencies`.
-- Dropped dead dependencies: `vuesax` (an alpha that was never imported),
-  `vue-cookies`, and `express` / `mysql` / `body-parser` — server packages
-  listed as *frontend* dependencies.
-- Bootstrap bumped to 5.3.x; three redundant JS imports collapsed into one.
-  `Home/Header.vue` and `Admin/AdminHeader.vue` still used Bootstrap 4's
-  `data-toggle` / `data-target`, so their mobile navbar togglers did nothing.
-- `VITE_API_URL` replaces the hardcoded `http://localhost:3000/api/` that was
-  duplicated across three files.
-- `npm audit`: 0 vulnerabilities.
-
-### What Phase 2 did
-
-Replaced the Express API with NestJS + TypeScript in `api/`, and closed the
-security holes that made the original interesting to come back to.
-
-**The seven SQL injection points are gone.** Every query now goes through a
-TypeORM repository with bound parameters. The original built SQL by string
-interpolation, including the login route:
-
-```js
-// before — auth-bypassable
-`SELECT * FROM Accounts WHERE email = '${req.body.email}'`
-```
-
-Other fixes worth calling out:
-
-| Then | Now |
-| ---- | --- |
-| The student ID *was* the password (bcrypt'd into the `umkcID` column) | Real `password_hash`, `MinLength(8)` enforced |
-| `isAdmin` read from the request body; the browser set it via `if (umkcID.length === 9)` | Role is always `student` server-side; a `role` field in the body is stripped by `whitelist: true` |
-| JWTs signed with the literal string `'TOKEN'` | `JWT_SECRET` from env, Joi-validated at boot to be ≥32 chars |
-| Login returned `SELECT *`, leaking the hash | `UserResponseDto` built field by field |
-| Register fired two sequential inserts, no rollback | One transaction |
-| Wide-open `cors()`, no security headers | CORS scoped to `CORS_ORIGIN`, plus `helmet` |
-| Five byte-identical sort routes (one of which sorted by the wrong column) | One `GET /applications?courseId=&sortBy=&order=`, `sortBy` an enum mapped to a column in code |
-| GPA and hours were unvalidated free text | `class-validator`: GPA 0–4.0, hours an integer |
-| `certificationTerm` / `prevDegree` collected then dropped | Persisted |
-| No way to accept or reject | `PATCH /applications/:id/status`, admin only |
-
-Live API docs are served at **`/api/docs`** (Swagger).
-
-Verified against a `mysql:8` container seeded from `db/`:
-
-```
-registering with "role":"admin"   -> account created as student  ✅
-login response contains a hash    -> no                          ✅
-student GET /applications         -> 403                         ✅
-?sortBy=gpa; DROP TABLE users--   -> 400, users table intact      ✅
-GPA 5.5                           -> 400                         ✅
-```
-
-### What Phase 1 did
-
-Rewrote the database as `db/01-schema.sql` + `db/02-seed.sql`.
-
-The old dump had no foreign keys, no indexes beyond primary keys, and a join
-that could never succeed: `Accounts.umkcID` was a `VARCHAR(65)` holding a bcrypt
-hash while `Students.umkcID` was an `INT`. It also shipped real-looking
-university emails, student IDs, GPAs and instructor names in a public repo.
-
-- Split login identity (`users`) from student profile (`students`) on a real
-  surrogate key, with foreign keys and `ON DELETE CASCADE` throughout.
-- `password_hash` is its own column. `role` is an `ENUM` defaulting to
-  `'student'`, so privilege can only ever be granted server-side.
-- `applications` gained `UNIQUE(user_id, course_id)`, `INDEX(course_id, gpa)`
-  for the admin dashboard's main query, and a `status` enum for review.
-- Applicant name and email are no longer duplicated onto every application.
-- **All real data replaced** with invented people and courses on the reserved
-  `example.edu` domain: 1 admin, 8 students, 6 courses, 12 applications.
-- Dropped the debug `SELECT *` after every `CREATE` and the two hardcoded
-  course-`12719` analytics queries.
-
-Verified by mounting `db/` into a `mysql:8` container — both scripts run clean
-and every foreign key resolves. Demo accounts (password `Password123!` for all):
-
-| Role | Email |
-| ---- | ----- |
-| Admin | `admin@example.edu` |
-| Student | `avery@example.edu` |
-
-Nothing reads this schema yet; the NestJS API in Phase 2 is the first consumer.
-
-### What Phase 0 did
-
-Housekeeping only — no behavior changed.
-
-- Deleted committed scratch files (`test.txt`, `newbranchgio.txt`) and local
-  Visual Studio state (`api/.vs/`, including a binary `slnx.sqlite`).
-- Deleted unreferenced components (`Home/Show.vue`, `Admin/Table.vue`) and images.
-- Deleted `src/assets/style.css` — a 922-line vendored copy of Bootstrap 4 that
-  was loaded *after* Bootstrap 5 from `node_modules`, so the two frameworks were
-  overriding each other.
-- Added `.nvmrc` (Node 20) and `.editorconfig`.
-- Rewrote `.gitignore`, which previously only ignored `.env.local` and so would
-  have happily committed a real `.env`.
-
-## Target stack
-
-| Layer    | Technology |
-| -------- | ---------- |
-| Frontend | Vue 3, Vite, Composition API, Pinia |
-| Backend  | NestJS, TypeScript, TypeORM |
+| Layer | Technology |
+| --- | --- |
+| Frontend | Vue 3 (Composition API, `<script setup>`), Vite, Pinia, Vue Router, TypeScript, Bootstrap 5 |
+| Backend | NestJS 11, TypeScript, TypeORM, Passport JWT, class-validator, Swagger |
 | Database | MySQL 8 |
-| Infra    | Docker Compose, GitHub Actions |
+| Testing | Jest + Supertest (API), Vitest + Vue Test Utils (web) |
+| Infrastructure | Docker Compose, nginx, GitHub Actions |
 
-## Repository layout
+## Architecture
 
+```mermaid
+graph LR
+  B[Browser] -->|HTTP| N[nginx<br/>serves the Vue build]
+  N -->|proxies /api| A[NestJS API]
+  A -->|TypeORM| D[(MySQL 8)]
 ```
-db/   MySQL schema and demo seed data
-api/  NestJS + TypeScript API
-web/  Vue 3 + Vite frontend
+
+```mermaid
+erDiagram
+  users ||--o| students : "profile"
+  users ||--o{ applications : "submits"
+  courses ||--o{ applications : "receives"
+  users ||--o{ student_courses : "completed"
+  courses ||--o{ student_courses : "taken by"
+
+  users {
+    int id PK
+    char umkc_id UK
+    varchar email UK
+    char password_hash
+    enum role
+    varchar first_name
+    varchar last_name
+  }
+  students {
+    int user_id PK_FK
+    varchar contact_no
+    bool certified
+  }
+  courses {
+    int id PK
+    varchar course_no
+    varchar course_name
+    varchar section
+    varchar instructor
+  }
+  applications {
+    int id PK
+    int user_id FK
+    int course_id FK
+    decimal gpa
+    smallint hrs_completed
+    enum curr_level
+    enum position
+    enum status
+    datetime applied_at
+  }
+  student_courses {
+    int user_id PK_FK
+    int course_id PK_FK
+    char grade
+  }
 ```
+
+## Quick start
+
+```bash
+git clone https://github.com/UMKCGroupProject/UMKCDepartmentProject.git
+cd UMKCDepartmentProject
+docker compose up
+```
+
+Then open **<http://localhost:8080>**. The database is created and seeded on
+first boot, so you can log in immediately:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@example.edu` | `Password123!` |
+| Student | `avery@example.edu` | `Password123!` |
+
+All seed data is fictional — invented names, courses and instructors on the
+reserved `example.edu` domain.
+
+## API
+
+Interactive Swagger docs run at **<http://localhost:3000/api/docs>**. Sign in via
+`POST /auth/login`, then paste the returned token into **Authorize**.
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `POST` | `/auth/register` | Public |
+| `POST` | `/auth/login` | Public |
+| `GET` | `/auth/me` | Authenticated |
+| `GET` | `/courses` | Authenticated |
+| `POST` | `/applications` | Authenticated |
+| `GET` | `/applications/mine` | Authenticated |
+| `GET` | `/applications?courseId=&sortBy=&order=&page=&limit=` | Admin |
+| `PATCH` | `/applications/:id/status` | Admin |
+
+`sortBy` accepts `gpa`, `hrsCompleted`, `lastName`, `firstName` or `appliedAt`.
+It is an enum mapped to a column in code, so an unrecognised value is rejected
+with a 400 and never reaches the database.
 
 ## Local development
 
-### API
-
-Needs a MySQL 8 instance seeded from `db/`. Docker Compose arrives in Phase 5;
-until then:
+Run the database in Docker and both apps on the host for hot reload.
 
 ```bash
+# Database
 docker run -d --name gta-db -p 3306:3306 \
   -e MYSQL_ROOT_PASSWORD=rootpw -e MYSQL_DATABASE=gta_portal \
   -e MYSQL_USER=gta -e MYSQL_PASSWORD=gtapw \
   -v "$PWD/db:/docker-entrypoint-initdb.d:ro" mysql:8
 
-cd api
-cp .env.example .env      # then set JWT_SECRET to 32+ characters
-npm install
-npm run start:dev
+# API — http://localhost:3000
+cd api && cp .env.example .env   # set JWT_SECRET to 32+ characters
+npm install && npm run start:dev
+
+# Web — http://localhost:5173
+cd web && cp .env.example .env
+npm install && npm run dev
 ```
 
-Then open <http://localhost:3000/api/docs>, log in via `POST /auth/login` with a
-demo account below, and paste the returned token into **Authorize**.
+The Vite dev server proxies `/api` to port 3000, so no CORS setup is needed.
 
-### Frontend
+## Testing
 
 ```bash
-cd web
-cp .env.example .env
-npm install
-npm run dev          # http://localhost:5173
+cd api && npm test          # unit tests
+cd api && npm run test:e2e   # API tests against a live database
+cd web && npm test           # component, store and router tests
 ```
 
-`/api` is proxied to the API on port 3000 by the Vite dev server, so no CORS
-setup is needed locally.
+The API suite covers authentication, role enforcement, input validation and the
+sort-field whitelist. The web suite covers the auth store, router guards, and
+the form components.
+
+## Project structure
+
+```
+api/                 NestJS API
+  src/
+    auth/            controller, service, JWT strategy, DTOs
+    users/           user + student entities
+    courses/         controller, service, entity
+    applications/    controller, service, entity, DTOs
+    common/          guards, decorators, exception filter
+    config/          env validation
+  test/              Supertest e2e specs
+web/                 Vue 3 + Vite frontend
+  src/
+    api/             axios instance and interceptors
+    stores/          Pinia auth store
+    router/          routes and navigation guards
+    layouts/         shared page shell
+    components/      FormField, DataTable, header, footer
+    views/           one component per route
+  tests/             Vitest specs
+db/                  schema and seed SQL, run on first boot
+docs/screenshots/
+```
 
 ## License
 
-MIT — added in Phase 7.
+MIT — see [LICENSE](LICENSE).

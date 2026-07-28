@@ -8,6 +8,8 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -18,11 +20,23 @@
     "vue": "^3.5.40",
     "vue-router": "^4.5.1"
   },
+  "comment:overrides": "Transitive advisories in dev-only test tooling that upstream has not released a fix for yet. All resolve to patched versions with no API change.",
+  "overrides": {
+    "brace-expansion": "^5.0.8",
+    "minimatch": "^10.0.3",
+    "glob": "^13.0.6",
+    "js-beautify": "^2.0.3",
+    "editorconfig": "^3.0.2"
+  },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.8.0",
+    "jsdom": "^29.1.1",
     "typescript": "^5.9.3",
     "vite": "^8.1.5",
+    "vitest": "^4.1.10",
     "vue-tsc": "^3.1.1"
   }
 }
